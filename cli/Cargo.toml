@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["user"]
+
+[dependencies]
+clap = "2.32.*"
+elf = "*"
+shellcode = { path = "../shellcode" }

@@ -1,0 +1,8 @@
+[package]
+name = "shellcode"
+version = "0.1.0"
+authors = ["user"]
+
+[dependencies]
+elf = "*"
+mmap = "*"
