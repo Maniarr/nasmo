@@ -12,7 +12,7 @@ pub struct Shellcode(pub Vec<u8>);
 
 impl fmt::Display for Shellcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "[] Size: {} bytes:\n", self.0.len());
+        write!(f, "[+] Size: {} bytes:\n", self.0.len());
         self.0.iter().map(|byte| write!(f, "\\x{}", format!("{:02X}", byte))).collect::<fmt::Result>()
     }
 }
@@ -38,15 +38,55 @@ pub fn execute_shellcode(shellcode: &[u8]) {
     }
 }
 
-pub fn extract_shellcode(path: &PathBuf) -> Result<Shellcode, String> {
+pub fn extract_shellcode(path: &PathBuf) -> Result<Vec<u8>, String> {
     match elf::File::open_path(path) {
         Ok(file)    => {
             match file.get_section(".text") {
-                Some(section)   => Ok(Shellcode(section.data.clone())),
+                Some(section)   => Ok(section.data.clone()),
                 None            => Err("Failed to look up .text section".to_string())
             }
         },
         Err(e)      => Err(format!("Error: {:?}", e))
+    }
+}
+
+pub fn assembly(asm: String) -> Result<Vec<u8>, String> {
+    let path = PathBuf::from("assembly.asm");
+
+    let t: Result<_, String> = match File::create(&path) {
+        Ok(mut file) => {
+            match file.write(asm.as_bytes()) {
+                Ok(_)  => Ok(()),
+                Err(_) => Err("Write error".to_string())
+            }
+        },
+        Err(e) => {
+            Err(format!("{}", e))
+        }
+    };
+
+    let mut path_object = path.clone();
+    path_object.set_extension("0");
+
+    let result = Command::new("nasm")
+        .arg("-f elf64")
+        .arg(format!("-o {}", &path_object.to_str().unwrap()))
+        .arg(&path)
+        .output();
+
+    match result {
+        Ok(_) => {
+            match extract_shellcode(&path_object) {
+                Ok(shellcode) => {
+                    fs::remove_file(path_object);
+                    fs::remove_file(path);
+
+                    Ok(shellcode)
+                },
+                Err(e) => Err(format!("{:?}", e))
+            }
+        },
+        Err(e) => Err(format!("{:?}", e))
     }
 }
 
@@ -73,7 +113,7 @@ pub fn build_assembly(path: &PathBuf) -> Result<PathBuf, String> {
 
                     match File::create(&path_bin) {
                         Ok(mut file) => {
-                            if let Err(_) = file.write_all(&shellcode.0) {
+                            if let Err(_) = file.write_all(&shellcode) {
                                 return Err("Write error".to_string());
                             }
 
@@ -90,5 +130,24 @@ pub fn build_assembly(path: &PathBuf) -> Result<PathBuf, String> {
         Err(e) => {
             Err(format!("{}", e))
         }
-    }   
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_assembly_ok() {
+        let asm = "mov rax, rdi";
+
+        assert_eq!(assembly(asm.to_string()), Ok(vec![72, 137, 248]));
+    }
+
+    #[test]
+    fn test_assembly_err() {
+        let asm = "mov 2, rax";
+
+        assert_eq!(assembly(asm.to_string()).is_err(), true);
+    }
 }

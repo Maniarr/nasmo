@@ -20,17 +20,15 @@ fn read_file(path: &PathBuf) -> Result<Vec<u8>, io::Error> {
 
 fn command_run(command: &ArgMatches) {
     if let Some(args) = command.values_of("file") {
-        let file_name = args.collect::<String>();
+        let mut path = PathBuf::from(args.collect::<String>());
 
         if command.is_present("object") {
-            match shellcode::extract_shellcode(&PathBuf::from(file_name)) {
-                Ok(shellcode) => shellcode::execute_shellcode(&shellcode.0),
+            match read_file(&path) {
+                Ok(shellcode) => shellcode::execute_shellcode(&shellcode),
                 Err(e) => println!("{}", e)
             }
         } else {
-            let mut path_file = PathBuf::from(file_name);
-
-            match shellcode::build_assembly(&path_file) {
+            match shellcode::build_assembly(&path) {
                 Ok(path) => {
                     match read_file(&path) {
                         Ok(shellcode) => shellcode::execute_shellcode(&shellcode),
@@ -66,7 +64,10 @@ fn command_extract(command: &ArgMatches) {
     if let Some(args) = command.values_of("file") {
         let file_name = args.collect::<String>();
 
-        println!("{}", shellcode::extract_shellcode(&PathBuf::from(file_name)).unwrap());
+        match shellcode::extract_shellcode(&PathBuf::from(file_name)) {
+            Ok(shellcode) => println!("{}", shellcode::Shellcode(shellcode)),
+            Err(e) => eprintln!("{}", e)
+        };
 
         return;
     }
