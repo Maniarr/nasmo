@@ -1,5 +1,5 @@
 [package]
-name = "shellcode-polymorphisme"
+name = "shellcode-polymorphism"
 version = "0.1.0"
 authors = ["user"]
 
