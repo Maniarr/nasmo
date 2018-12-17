@@ -7,7 +7,9 @@ pub enum Register {
     GeneralRegister8H(char),
     GeneralRegister16(char),
     GeneralRegister32(char),
-    GeneralRegister64(char)
+    GeneralRegister64(char),
+
+    SegmentRegister(char)
 }
 
 #[derive(Debug, PartialEq)]

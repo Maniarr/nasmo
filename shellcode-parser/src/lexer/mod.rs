@@ -56,6 +56,21 @@ fn general_register(input: &[u8]) -> Result<token::Register, Error> {
     Err(Error {})
 }
 
+fn segment_register(input: &[u8]) -> Result<token::Register, Error>  {
+    if input.len() == 2 && &input[1] == &('s' as u8) {
+        if &input[0] == &('c' as u8) ||
+            &input[0] == &('d' as u8) ||
+            &input[0] == &('e' as u8) ||
+            &input[0] == &('f' as u8) ||
+            &input[0] == &('g' as u8) ||
+            &input[0] == &('s' as u8) {
+            return Ok(token::Register::SegmentRegister(input[0].clone() as char));
+        }
+    }
+
+    Err(Error {})
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
