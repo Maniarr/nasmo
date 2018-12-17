@@ -9,7 +9,10 @@ pub enum Register {
     GeneralRegister32(char),
     GeneralRegister64(char),
 
-    SegmentRegister(char)
+    SegmentRegister(char),
+
+    ControlRegister(u8),
+
 }
 
 #[derive(Debug, PartialEq)]

@@ -71,10 +71,25 @@ fn segment_register(input: &[u8]) -> Result<token::Register, Error>  {
     Err(Error {})
 }
 
+fn control_register(input: &[u8]) -> Result<token::Register, Error> {
+    if input.len() == 3 && &input[0..2] == "cr".as_bytes()  {
+        if bytes_is_numeric(&input[2..]) {
+            return Ok(token::Register::ControlRegister(str::from_utf8(&input[2..]).unwrap().parse::<u8>().unwrap()));
+        }
+    }
+
+    Err(Error {})
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_control_register() {
+        assert_eq!(Ok(token::Register::ControlRegister(4)), control_register(&"cr4".as_bytes()));
+    }
+    
     #[test]
     fn test_rax_register() {
         assert_eq!(Ok(token::Register::GeneralRegister64('a')), general_register(&"rax".as_bytes()));
