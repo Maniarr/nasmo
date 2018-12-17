@@ -1,18 +1,17 @@
 use std::cmp;
 
-#[derive(Debug, PartialEq)]
-pub enum Register {
-    GeneralRegister(u8),
-    GeneralRegister8L(char),
-    GeneralRegister8H(char),
-    GeneralRegister16(char),
-    GeneralRegister32(char),
-    GeneralRegister64(char),
+#[derive(Debug)]
+pub enum Register<'a> {
+    Register8(&'a str),
+    Register16(&'a str),
+    Register32(&'a str),
+    Register64(&'a str),
 
-    SegmentRegister(char),
+    SegmentRegister(&'a str),
 
     ControlRegister(u8),
 
+    RFlagsRegister,
 }
 
 #[derive(Debug, PartialEq)]

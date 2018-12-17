@@ -24,32 +24,68 @@ fn mov_operand(input: &[u8]) -> Result<token::Instruction, Error> {
     Err(Error {})
 }
 
-fn general_register(input: &[u8]) -> Result<token::Register, Error> {
-    if &input[0] == &('r' as u8) && bytes_is_numeric(&input[1..]) {
-        return Ok(token::Register::GeneralRegister(str::from_utf8(&input[1..]).unwrap().parse::<u8>().unwrap()));
-    }
+// register a, b, c, d
+fn volatile_register(input: &[u8]) -> Result<token::Register, Error> {
+    let register_names = vec!["a".as_bytes(), "b".as_bytes(), "c".as_bytes(), "d".as_bytes()];
 
-    if input.len() == 2 && (&input[0] == &('a' as u8) || 
-                            &input[0] == &('b' as u8) || 
-                            &input[0] == &('c' as u8) || 
-                            &input[0] == &('d' as u8)) {
-        if &input[1] == &('l' as u8) {
-            return Ok(token::Register::GeneralRegister8L(input[0].clone() as char));
-        } else if &input[1] == &('h' as u8) {
-            return Ok(token::Register::GeneralRegister8H(input[0].clone() as char));
-        } else if &input[1] == &('x' as u8) {
-            return Ok(token::Register::GeneralRegister16(input[0].clone() as char));
+    for name in register_names {
+        if input.len() == 2 && &input[..1] == name && input[1] == ('l' as u8) {
+            return Ok(token::Register::Register8(str::from_utf8(name).unwrap()));
+        } else if input.len() == 2 && &input[..1] == name && input[1] == ('x' as u8) {
+            return Ok(token::Register::Register16(str::from_utf8(name).unwrap()));
+        }
+
+        if input.len() == 3 && input[0] == ('e' as u8) && &input[1..2] == name && input[2] == ('x' as u8) {
+            return Ok(token::Register::Register32(str::from_utf8(name).unwrap()));
+        } else if input.len() == 3 && input[0] == ('r' as u8) && &input[1..2] == name && input[2] == ('x' as u8) {
+            return Ok(token::Register::Register64(str::from_utf8(name).unwrap()));
         }
     }
 
-    if input.len() == 3 && (&input[1] == &('a' as u8) || 
-                            &input[1] == &('b' as u8) || 
-                            &input[1] == &('c' as u8) || 
-                            &input[1] == &('d' as u8)) {
-        if &input[0] == &('e' as u8) && &input[2] == &('x' as u8) {
-            return Ok(token::Register::GeneralRegister32(input[1].clone() as char));
-        } else if &input[0] == &('r' as u8) && &input[2] == &('x' as u8) {
-            return Ok(token::Register::GeneralRegister64(input[1].clone() as char));
+    Err(Error {})
+}
+
+// register si, di, sp, bp
+fn non_volatile_register(input: &[u8]) -> Result<token::Register, Error> {
+    let register_names = vec!["si".as_bytes(), "di".as_bytes(), "sp".as_bytes(), "bp".as_bytes()];
+
+    for name in register_names {
+        if input.len() == 3 && &input[..2] == name && input[2] == ('l' as u8) {
+            return Ok(token::Register::Register8(str::from_utf8(name).unwrap()));
+        } else if  input == name {
+            return Ok(token::Register::Register16(str::from_utf8(name).unwrap()));
+        }
+
+        if input.len() == 3 && input[0] == ('e' as u8) && &input[1..=2] == name {
+            return Ok(token::Register::Register32(str::from_utf8(name).unwrap()));
+        } else if input.len() == 3 && input[0] == ('r' as u8) && &input[1..=2] == name {
+            return Ok(token::Register::Register64(str::from_utf8(name).unwrap()));
+        }
+    }    
+
+    Err(Error {})
+}
+
+fn general_register(input: &[u8]) -> Result<token::Register, Error> {
+    let register_names = (8..=15).into_iter().map(|n| n.to_string()).collect::<Vec<String>>();
+
+    for register_name in register_names {
+        let name = register_name.as_bytes().clone();
+
+        let (input_name, _) = str::from_utf8(&input[1..]).unwrap().split_at(input.len() - 1);
+
+        if input[0] == 'r' as u8 && input_name.as_bytes() == name {
+            if bytes_is_numeric(&input[1..]) {
+                return Ok(token::Register::Register64(input_name));
+            } else if let Some(c) = input.last() {
+                if *c == 'd' as u8 {
+                    return Ok(token::Register::Register32(input_name));            
+                } else if *c == 'w' as u8 {
+                    return Ok(token::Register::Register16(input_name));            
+                } else if *c == 'b' as u8 {
+                    return Ok(token::Register::Register8(input_name));            
+                }
+            }
         }
     }
 
@@ -64,7 +100,7 @@ fn segment_register(input: &[u8]) -> Result<token::Register, Error>  {
             &input[0] == &('f' as u8) ||
             &input[0] == &('g' as u8) ||
             &input[0] == &('s' as u8) {
-            return Ok(token::Register::SegmentRegister(input[0].clone() as char));
+            return Ok(token::Register::SegmentRegister(str::from_utf8(input).unwrap()));
         }
     }
 
@@ -81,17 +117,9 @@ fn control_register(input: &[u8]) -> Result<token::Register, Error> {
     Err(Error {})
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_control_register() {
-        assert_eq!(Ok(token::Register::ControlRegister(4)), control_register(&"cr4".as_bytes()));
+fn rlags_register(input: &[u8]) -> Result<token::Register, Error> {
+    match input == "rflags".as_bytes() {
+        true  => Ok(token::Register::RFlagsRegister),
+        false => Err(Error {})
     }
-    
-    #[test]
-    fn test_rax_register() {
-        assert_eq!(Ok(token::Register::GeneralRegister64('a')), general_register(&"rax".as_bytes()));
-    }
-}
+}   
