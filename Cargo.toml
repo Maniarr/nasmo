@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "shellcode",
+    "shellcode-metamorphism",
+    "shellcode-polymorphism",
+    "shellcode-parser"
+]
+

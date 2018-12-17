@@ -1,0 +1,7 @@
+[package]
+name = "shellcode_parser"
+version = "0.1.0"
+authors = ["Maniarr <nicolas@maniarr.fr>"]
+edition = "2018"
+
+[dependencies]
