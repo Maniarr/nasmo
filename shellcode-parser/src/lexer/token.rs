@@ -1,20 +1,14 @@
-use std::cmp;
-
-#[derive(Debug)]
-pub enum Register<'a> {
-    Register8(&'a str),
-    Register16(&'a str),
-    Register32(&'a str),
-    Register64(&'a str),
-
-    SegmentRegister(&'a str),
-
-    ControlRegister(u8),
-
-    RFlagsRegister,
+#[derive(Debug, Clone, PartialEq)]
+pub enum Token {
+    Register(String),
+    Assignation(Box<Token>, Box<Token>),
+    Group(Vec<Box<Token>>),
+    Literal(String)
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Instruction {
-    Mov,
+#[derive(Debug)]
+pub struct Instruction {
+    mnemonic: String,
+    operands: Vec<String>,
+    registers: Vec<String>
 }

@@ -6,3 +6,4 @@ authors = ["user"]
 [dependencies]
 elf = "*"
 mmap = "*"
+keystone = "0.9.0"
