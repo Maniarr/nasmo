@@ -51,19 +51,32 @@ fn parse_token(part: &str) -> Token {
     }
 }
 
-fn parse_line(line: &str) -> Token {
-    let parts: Vec<&str> = line.split_whitespace().collect();
-
+fn parse_line(parts: Vec<&str>) -> Token {
     let mut tokens: Vec<Box<Token>> = Vec::new();
 
     let mut iter = parts.iter();
 
     while let Some(part) = iter.next() {
         if part == &"=" {
-            return Token::Assignation(
-                Box::new(Token::Group(tokens.clone())),
-                Box::new(Token::Group(iter.borrow_mut().map(|item| Box::new(parse_token(item))).collect::<Vec<Box<Token>>>()))
-            );
+            if tokens.len() == 1 {
+                if let Some(token) = tokens.first() {
+                    return Token::Assignation(
+                        (*token).clone(),
+                        Box::new(parse_line(iter.borrow_mut().map(|item| *item).collect()))
+                    );
+                }
+            }
+
+            panic!("Assignation error");
+        } else if part == &"SYSCALL" {
+            let iter = iter.borrow_mut();
+
+            if let Some(name) = iter.next(){
+                return Token::Syscall(
+                    String::from(*name),
+                    iter.borrow_mut().map(|item| Box::new(parse_token(item))).collect::<Vec<Box<Token>>>()
+                );
+            }
         } else {
             tokens.push(Box::new(parse_token(part)));
         }
@@ -77,18 +90,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_is_syscall() {
+    fn test_parse_syscall() {
         assert_eq!(
             Token::Assignation(
-                Box::new(Token::Group(vec![
-                    Box::new(Token::Register("R9".to_string()))
-                ])),
-                Box::new(Token::Group(vec![
-                    Box::new(Token::Literal("SYSCALL".to_string())),
-                    Box::new(Token::Literal("OPEN".to_string()))
-                ])),
+                Box::new(Token::Register("R9".to_string())),
+                Box::new(
+                    Token::Syscall("SOCKET".to_string(), vec![
+                        Box::new(Token::Literal("2".to_string())),
+                        Box::new(Token::Literal("1".to_string())),
+                        Box::new(Token::Literal("6".to_string()))
+                    ])
+                )
             ),
-            parse_line("R9 = SYSCALL OPEN")
+            parse_line("R9 = SYSCALL SOCKET 2 1 6".split_whitespace().collect())
         );
     }
 }

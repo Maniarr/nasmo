@@ -3,7 +3,8 @@ pub enum Token {
     Register(String),
     Assignation(Box<Token>, Box<Token>),
     Group(Vec<Box<Token>>),
-    Literal(String)
+    Literal(String),
+    Syscall(String, Vec<Box<Token>>)
 }
 
 #[derive(Debug)]
