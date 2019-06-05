@@ -3,7 +3,7 @@ use std::cmp;
 use std::io::BufRead;
 use std::str::FromStr;
 
-mod token;
+pub mod token;
 
 use crate::lexer::token::*;
 use crate::lexer::token::Token::Literal;
