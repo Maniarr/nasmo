@@ -19,6 +19,7 @@ fn is_register(part: &str) -> Result<Token, ()> {
         "RSP",
         "RSI",
         "RDI",
+        /*
         "EAX",
         "EBX",
         "ECX",
@@ -27,6 +28,7 @@ fn is_register(part: &str) -> Result<Token, ()> {
         "ESP",
         "ESI",
         "EDI",
+        */
         "R8",
         "R9",
         "R10",
@@ -51,7 +53,7 @@ fn parse_token(part: &str) -> Token {
     }
 }
 
-fn parse_line(parts: Vec<&str>) -> Token {
+pub fn parse_line(parts: Vec<&str>) -> Token {
     let mut tokens: Vec<Box<Token>> = Vec::new();
 
     let mut iter = parts.iter();
