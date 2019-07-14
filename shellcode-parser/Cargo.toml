@@ -5,3 +5,4 @@ authors = ["Maniarr <nicolas@maniarr.fr>"]
 edition = "2018"
 
 [dependencies]
+rand = "0.7"

@@ -7,7 +7,7 @@ pub enum Token {
     Syscall(String, Vec<Box<Token>>)
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Instruction {
     pub mnemonic: String,
     pub operands: Vec<String>,
